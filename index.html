@@ -1,93 +1,198 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nupager Chat</title>
+<title>NU Pager 1999</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f172a;
-  color:white;
+  background:#777;
   display:flex;
-  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   height:100vh;
+  font-family:monospace;
 }
 
-header{
-  background:#1e293b;
-  padding:15px;
-  text-align:center;
-  font-weight:bold;
+/* ตัวเครื่อง */
+#device{
+  position:relative;
+  width:340px;
+  height:640px;
+  background:linear-gradient(#e0e0e0,#bdbdbd);
+  border-radius:45px;
+  padding:20px;
+  box-shadow:
+    inset -5px -5px 10px rgba(0,0,0,0.2),
+    inset 5px 5px 10px rgba(255,255,255,0.6),
+    0 25px 50px rgba(0,0,0,0.5);
+  display:flex;
+  flex-direction:column;
+}
+
+/* ลำโพง */
+.speaker{
+  width:60px;
+  height:6px;
+  background:#555;
+  border-radius:10px;
+  align-self:center;
+  margin-bottom:10px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* จอ */
+#screen{
+  position:relative;
+  overflow:hidden;
+  background:#9bbc0f;
+  border:10px solid #444;
+  border-radius:20px;
+  padding:10px;
+  height:300px;
+  display:flex;
+  flex-direction:column;
+  box-shadow:
+    inset -4px -4px 6px rgba(0,0,0,0.3),
+    inset 4px 4px 6px rgba(255,255,255,0.3);
+}
+
+/* แสงสะท้อน */
+#screen::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:40%;
+  background:linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.25),
+    rgba(255,255,255,0.05),
+    transparent
+  );
+  pointer-events:none;
+}
+
+/* dot matrix */
+#screen::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image: radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+  background-size:3px 3px;
+  pointer-events:none;
+}
+
+/* status bar */
+#status{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:black;
+  margin-bottom:5px;
 }
 
 #chat{
   flex:1;
   overflow-y:auto;
-  padding:10px;
+  color:black;
+  font-size:13px;
 }
 
 .message{
-  background:#1e293b;
-  padding:8px;
-  border-radius:8px;
-  margin-bottom:8px;
+  margin-bottom:5px;
 }
 
-footer{
-  display:flex;
-  padding:10px;
-  background:#1e293b;
+/* รุ่น */
+.model-label{
+  text-align:center;
+  font-size:11px;
+  margin-top:6px;
+  color:#444;
+  letter-spacing:2px;
 }
 
-input{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:8px;
+/* ปุ่ม */
+#buttons{
+  margin-top:25px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
 }
 
-button{
-  margin-left:8px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
+.pager-btn{
+  background:linear-gradient(#f5f5f5,#cfcfcf);
+  border-radius:18px;
+  padding:14px;
+  text-align:center;
+  font-weight:bold;
+  box-shadow:
+    -3px -3px 6px rgba(255,255,255,0.8),
+    3px 3px 8px rgba(0,0,0,0.3);
   cursor:pointer;
-  background:#3b82f6;
-  color:white;
+  user-select:none;
 }
-#loginBtn{
-  margin:20px;
+
+.pager-btn:active{
+  box-shadow:
+    inset -3px -3px 6px rgba(255,255,255,0.7),
+    inset 3px 3px 6px rgba(0,0,0,0.4);
+}
+
+/* Power */
+.power-btn{
+  margin-top:15px;
+  align-self:center;
+  background:linear-gradient(#ff4d4d,#990000);
+  color:white;
+  padding:8px 20px;
+  border-radius:20px;
+  font-weight:bold;
+  box-shadow:0 4px 8px rgba(0,0,0,0.4);
+  cursor:pointer;
 }
 </style>
 </head>
+
 <body>
 
-<header>Nupager Global Chat</header>
+<div id="device">
+  <div class="speaker"></div>
 
-<div id="loginSection" style="text-align:center;">
-  <button id="loginBtn">Login with Google</button>
-</div>
+  <div id="screen">
+    <div id="status">
+      <span>📶▮▮▮</span>
+      <span id="clock">00:00</span>
+      <span>🔋▮▮▮▮</span>
+    </div>
+    <div id="chat">Booting NU Pager 1999...\nReady.\n</div>
+  </div>
 
-<div id="app" style="display:none; flex:1; flex-direction:column;">
-  <div id="chat"></div>
-  <footer>
-    <input id="messageInput" placeholder="พิมพ์ข้อความ...">
-    <button onclick="sendMessage()">ส่ง</button>
-  </footer>
+  <div class="model-label">Model NP-1999</div>
+
+  <div id="buttons">
+    <div class="pager-btn" onclick="sendMessage()">SEND</div>
+    <div class="pager-btn" onclick="clearChat()">CLR</div>
+    <div class="pager-btn">MENU</div>
+    <div class="pager-btn">▲</div>
+    <div class="pager-btn">▼</div>
+    <div class="pager-btn">OK</div>
+  </div>
+
+  <div class="power-btn" onclick="togglePower()">POWER</div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+  apiKey: "YOUR_API_KEY",
   authDomain: "nu-pager.firebaseapp.com",
   databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
   projectId: "nu-pager",
@@ -100,48 +205,60 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-const loginBtn = document.getElementById("loginBtn");
-const loginSection = document.getElementById("loginSection");
-const appSection = document.getElementById("app");
 const chatDiv = document.getElementById("chat");
 
-loginBtn.onclick = () => {
-  const provider = new GoogleAuthProvider();
-  signInWithPopup(auth, provider);
-};
+const provider = new GoogleAuthProvider();
+signInWithPopup(auth, provider);
 
-onAuthStateChanged(auth, (user) => {
-  if(user){
-    loginSection.style.display = "none";
-    appSection.style.display = "flex";
+onChildAdded(ref(db, "messages"), (snapshot) => {
+  const data = snapshot.val();
+  const div = document.createElement("div");
+  div.className = "message";
 
-    const messagesRef = ref(db, "messages");
+  const time = new Date().toLocaleTimeString();
+  div.textContent = `[${time}] ${data.name}: ${data.text}`;
 
-    onChildAdded(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = data.name + ": " + data.text;
-      chatDiv.appendChild(div);
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-    });
-  }
+  chatDiv.appendChild(div);
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+
+  const beep = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  beep.play();
+
+  if (navigator.vibrate) navigator.vibrate(200);
 });
 
 window.sendMessage = function(){
-  const input = document.getElementById("messageInput");
-  const text = input.value;
-  if(text.trim() === "") return;
-
-  const user = auth.currentUser;
+  const text = prompt("Enter message:");
+  if(!text) return;
 
   push(ref(db, "messages"), {
-    name: user.displayName,
+    name: auth.currentUser.displayName,
     text: text
   });
-
-  input.value = "";
 };
+
+window.clearChat = function(){
+  chatDiv.innerHTML = "";
+};
+
+let powerOn = true;
+window.togglePower = function(){
+  const screen = document.getElementById("screen");
+  if(powerOn){
+    screen.style.background = "#000";
+    chatDiv.innerHTML = "";
+  } else {
+    screen.style.background = "#9bbc0f";
+    chatDiv.innerHTML = "Booting NU Pager 1999...\nReady.\n";
+  }
+  powerOn = !powerOn;
+};
+
+setInterval(() => {
+  const now = new Date();
+  document.getElementById("clock").textContent =
+    now.toLocaleTimeString();
+}, 1000);
 
 </script>
 
