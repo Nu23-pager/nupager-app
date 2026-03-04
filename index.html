@@ -1,1 +1,149 @@
 
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nupager Chat</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
+
+header{
+  background:#1e293b;
+  padding:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+#chat{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+}
+
+.message{
+  background:#1e293b;
+  padding:8px;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+footer{
+  display:flex;
+  padding:10px;
+  background:#1e293b;
+}
+
+input{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+}
+
+button{
+  margin-left:8px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#3b82f6;
+  color:white;
+}
+#loginBtn{
+  margin:20px;
+}
+</style>
+</head>
+<body>
+
+<header>Nupager Global Chat</header>
+
+<div id="loginSection" style="text-align:center;">
+  <button id="loginBtn">Login with Google</button>
+</div>
+
+<div id="app" style="display:none; flex:1; flex-direction:column;">
+  <div id="chat"></div>
+  <footer>
+    <input id="messageInput" placeholder="พิมพ์ข้อความ...">
+    <button onclick="sendMessage()">ส่ง</button>
+  </footer>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+  authDomain: "nu-pager.firebaseapp.com",
+  databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
+  projectId: "nu-pager",
+  storageBucket: "nu-pager.firebasestorage.app",
+  messagingSenderId: "1616905096",
+  appId: "1:1616905096:web:a6e426d97612e523f1703d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const loginBtn = document.getElementById("loginBtn");
+const loginSection = document.getElementById("loginSection");
+const appSection = document.getElementById("app");
+const chatDiv = document.getElementById("chat");
+
+loginBtn.onclick = () => {
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider);
+};
+
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    loginSection.style.display = "none";
+    appSection.style.display = "flex";
+
+    const messagesRef = ref(db, "messages");
+
+    onChildAdded(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      const div = document.createElement("div");
+      div.className = "message";
+      div.textContent = data.name + ": " + data.text;
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    });
+  }
+});
+
+window.sendMessage = function(){
+  const input = document.getElementById("messageInput");
+  const text = input.value;
+  if(text.trim() === "") return;
+
+  const user = auth.currentUser;
+
+  push(ref(db, "messages"), {
+    name: user.displayName,
+    text: text
+  });
+
+  input.value = "";
+};
+
+</script>
+
+</body>
+</html>
