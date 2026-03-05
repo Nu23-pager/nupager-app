@@ -1,296 +1,180 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
-<title>NU-PAGER</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nu Pager</title>
 
 <style>
 
 body{
+background:#e5e5e5;
 font-family:monospace;
-background:#dcdcdc;
 display:flex;
 justify-content:center;
-margin-top:20px;
+margin-top:40px;
 }
 
-/* ตัวเครื่อง pager */
-
-.pager{
-width:92vw;
-max-width:420px;
-background:#f4f4f4;
-padding:14px;
-border-radius:14px;
-box-shadow:0 10px 25px rgba(0,0,0,0.25);
-margin:auto;
+#device{
+width:360px;
+background:#f3f3f3;
+padding:15px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
-/* หัวเครื่อง */
-
-.title{
-text-align:center;
-font-size:16px;
-font-weight:bold;
-letter-spacing:1px;
-margin-bottom:2px;
-}
-
-.device{
-text-align:center;
-font-size:13px;
+#screen{
+background:#cfe6c9;
+height:220px;
+overflow-y:auto;
+padding:10px;
+font-size:14px;
+border:2px solid #777;
 margin-bottom:10px;
 }
 
-/* หน้าจอ LCD */
-
-.screen{
-background:#9fbf8f;
-height:180px;
-overflow:auto;
-padding:8px;
-border:4px solid #222;
-border-radius:6px;
-font-size:13px;
-line-height:1.4;
-box-shadow:
-inset 0 0 8px rgba(0,0,0,0.5);
-}
-
-/* ช่องกรอก */
-
 input{
 width:100%;
-margin-top:6px;
 padding:8px;
-border-radius:6px;
-border:1px solid #999;
+margin-top:5px;
 font-family:monospace;
-font-size:14px;
 }
-
-/* ปุ่ม */
 
 button{
 width:100%;
-margin-top:8px;
 padding:10px;
-border-radius:8px;
-border:none;
-background:#e0e0e0;
-font-weight:bold;
-font-size:14px;
+margin-top:10px;
+font-size:16px;
 }
 
-/* ปุ่มแถวล่าง */
-
-.row{
-display:flex;
-gap:6px;
-margin-top:6px;
-}
-
-.row button{
-flex:1;
-}
-
-/* โหมด industrial */
-
-.industrial{
-background:#222;
-color:white;
-}
-
-/* Samsung สีดำ */
-
-button{
-color:black;
-}
-
-/* iPhone */
-
-@supports (-webkit-touch-callout: none) {
-
-button{
-color:#007aff;
-}
-
+.msg{
+margin-bottom:6px;
 }
 
 </style>
-
 </head>
+
 
 <body>
 
-<div class="pager" id="pager">
+<div id="device">
 
-<div class="title">
-NU-PAGER MODEL NP-1999
-</div>
+<h3>NU-PAGER NP-1999</h3>
 
-<div class="device">
-DEVICE : <span id="deviceId"></span>
-</div>
+<div id="screen"></div>
 
-<div class="screen" id="screen">
-Connecting...
-</div>
+<input id="from" placeholder="FROM">
+<input id="to" placeholder="TO">
+<input id="text" placeholder="type message">
 
-<input id="target" placeholder="TARGET DEVICE (ex: NP-0002)">
-
-<input id="message" maxlength="80" placeholder="MAX 80 CHARACTERS">
-
-<button onclick="sendMessage()">SEND MESSAGE</button>
-
-<div class="row">
-<button onclick="read()">READ</button>
-<button onclick="toggleMode()">MENU</button>
-<button onclick="clearMsg()">CLR</button>
-</div>
+<button onclick="send()">SEND</button>
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
-<script>
+<script type="module">
 
-/* Firebase config */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+push,
+onChildAdded
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 const firebaseConfig = {
 
-apiKey:"AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-
-authDomain:"YOUR_PROJECT.firebaseapp.com",
-
-databaseURL:"YOUR_DB_URL",
-
-projectId:"YOUR_PROJECT",
-
-storageBucket:"",
-
-messagingSenderId:"",
-
-appId:""
+apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxS Jj3durM8",
+authDomain: "PASTE_AUTH_DOMAIN",
+databaseURL: "PASTE_DATABASE_URL",
+projectId: "PASTE_PROJECT_ID",
+storageBucket: "PASTE_BUCKET",
+messagingSenderId: "PASTE_ID",
+appId: "PASTE_APP_ID"
 
 };
 
-firebase.initializeApp(firebaseConfig);
 
-const db=firebase.database();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-/* สร้าง device id */
+const screen = document.getElementById("screen");
 
-let device=localStorage.getItem("device");
+function addMessage(data){
 
-if(!device){
+const div = document.createElement("div");
+div.className="msg";
 
-device="NP-"+Math.floor(Math.random()*9000+1000);
+div.innerText =
+"[" + data.time + "] "
++ data.from + " → "
++ data.to + " : "
++ data.text;
 
-localStorage.setItem("device",device);
+screen.appendChild(div);
 
-}
+screen.scrollTop = screen.scrollHeight;
 
-document.getElementById("deviceId").innerText=device;
-
-/* limit message */
-
-let dailyCount=localStorage.getItem("count")||0;
-
-/* ส่งข้อความ */
-
-function sendMessage(){
-
-if(dailyCount>=50){
-
-alert("Daily limit reached (50)");
-
-return;
+beep();
 
 }
 
-let target=document.getElementById("target").value.trim();
+function beep(){
 
-let msg=document.getElementById("message").value.trim();
+const ctx = new AudioContext();
 
-if(!target || !msg){
+const osc = ctx.createOscillator();
 
-alert("Enter target and message");
+osc.type="square";
+osc.frequency.value=900;
 
-return;
+osc.connect(ctx.destination);
+
+osc.start();
+
+setTimeout(()=>{
+osc.stop();
+},120);
 
 }
 
-let time=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
-db.ref("messages").push({
 
-from:device,
-to:target,
-text:msg,
+window.send = function(){
+
+const from = document.getElementById("from").value;
+const to = document.getElementById("to").value;
+const text = document.getElementById("text").value;
+
+const now = new Date();
+
+const time =
+now.getHours().toString().padStart(2,'0')
++ ":"
++ now.getMinutes().toString().padStart(2,'0');
+
+push(ref(db,"messages"),{
+
+from:from,
+to:to,
+text:text,
 time:time
 
 });
 
-document.getElementById("message").value="";
+document.getElementById("text").value="";
 
-dailyCount++;
+};
 
-localStorage.setItem("count",dailyCount);
 
-}
 
-/* อ่านข้อความ */
+onChildAdded(ref(db,"messages"),(snapshot)=>{
 
-function read(){
-
-let screen=document.getElementById("screen");
-
-db.ref("messages").limitToLast(50).on("value",snap=>{
-
-screen.innerHTML="";
-
-snap.forEach(d=>{
-
-let m=d.val();
-
-if(m.to===device || m.from===device){
-
-screen.innerHTML+=`[${m.time}] ${m.from} : ${m.text}<br>`;
-
-}
+addMessage(snapshot.val());
 
 });
-
-screen.scrollTop=screen.scrollHeight;
-
-});
-
-}
-
-/* ล้างหน้าจอ */
-
-function clearMsg(){
-
-document.getElementById("screen").innerHTML="";
-
-}
-
-/* โหมดเครื่อง */
-
-function toggleMode(){
-
-document.getElementById("pager").classList.toggle("industrial");
-
-}
-
-/* โหลดข้อความ */
-
-read();
 
 </script>
 
