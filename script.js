@@ -15,9 +15,17 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let deviceId = localStorage.getItem("deviceId");
 
+
 if(!deviceId){
-deviceId = Math.floor(Math.random()*100000);
+
+let serial = localStorage.getItem("serial") || 1;
+
+deviceId = "NU-" + String(serial).padStart(4,"0");
+
 localStorage.setItem("deviceId",deviceId);
+
+localStorage.setItem("serial", Number(serial)+1);
+
 }
 
 console.log("Device ID:",deviceId);
