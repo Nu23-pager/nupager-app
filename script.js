@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+  apiKey: "AIzaSy...",
   authDomain: "nu-pager.firebaseapp.com",
   databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
   projectId: "nu-pager",
@@ -13,22 +13,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 let deviceId = localStorage.getItem("deviceId");
 
+async function registerDevice() {
 
-if(!deviceId){
+  if (!deviceId) {
 
-let serial = localStorage.getItem("serial") || 1;
+    const counterRef = ref(db, "deviceCounter");
 
-deviceId = "NU-" + String(serial).padStart(4,"0");
+    const result = await runTransaction(counterRef, (current) => {
+      return (current || 0) + 1;
+    });
 
-localStorage.setItem("deviceId",deviceId);
+    const number = result.snapshot.val();
 
-localStorage.setItem("serial", Number(serial)+1);
+    deviceId = "NU-" + String(number).padStart(4, "0");
 
+    localStorage.setItem("deviceId", deviceId);
+  }
+
+  console.log("Device ID:", deviceId);
 }
 
-console.log("Device ID:",deviceId);
+registerDevice();
+
+
 window.sendMessage = function() {
 
   const from = document.getElementById("from").value;
