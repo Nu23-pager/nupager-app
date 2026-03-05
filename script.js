@@ -13,7 +13,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+let deviceId = localStorage.getItem("deviceId");
 
+if(!deviceId){
+deviceId = Math.floor(Math.random()*100000);
+localStorage.setItem("deviceId",deviceId);
+}
+
+console.log("Device ID:",deviceId);
 window.sendMessage = function() {
 
   const from = document.getElementById("from").value;
