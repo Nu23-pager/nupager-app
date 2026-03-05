@@ -20,8 +20,7 @@ async function registerDevice() {
 
   if (!deviceId) {
 
-    const counterRef = ref(db, "deviceCounter");
-
+    const counterRef = ref(db, "serial");
     const result = await runTransaction(counterRef, (current) => {
       return (current || 0) + 1;
     });
