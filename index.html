@@ -1,79 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NU Pager</title>
 
-<title>NU-PAGER Model NP-1999</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <style>
 
 body{
-background:#0d0d0d;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+background:black;
+color:#00ff88;
 font-family:monospace;
-}
-
-.pager{
-width:340px;
-background:#1c1c1c;
-border-radius:20px;
+text-align:center;
 padding:20px;
-box-shadow:0 20px 50px rgba(0,0,0,0.7);
 }
 
-.screen{
-background:#0b1f0b;
-color:#8aff8a;
-padding:15px;
-height:140px;
-border-radius:10px;
+#screen{
+background:#001a00;
+padding:20px;
+border-radius:15px;
+box-shadow:0 0 20px #00ff88;
+height:200px;
 overflow:auto;
-font-size:14px;
-box-shadow:inset 0 0 20px rgba(0,255,0,0.2);
-}
-
-.buttons{
-margin-top:20px;
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:12px;
-}
-
-.btn{
-background:#2a2a2a;
-border:none;
-padding:12px;
-border-radius:10px;
-color:#8aff8a;
-font-weight:bold;
-cursor:pointer;
-}
-
-.btn:active{
-background:#111;
-}
-
-.inputs{
-margin-top:15px;
-display:flex;
-flex-direction:column;
-gap:8px;
+text-align:left;
 }
 
 input{
-padding:8px;
+width:80%;
+padding:10px;
+margin:5px;
+border-radius:8px;
 border:none;
-border-radius:6px;
 }
 
-.send{
-background:#0f3;
-color:#000;
+button{
+background:#00ff44;
+border:none;
+padding:15px;
+width:85%;
+border-radius:10px;
 font-weight:bold;
+margin-top:5px;
+}
+
+.keypad{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:20px;
+}
+
+.key{
+background:#333;
+color:#00ff88;
+padding:15px;
+border-radius:10px;
 }
 
 </style>
@@ -81,57 +64,73 @@ font-weight:bold;
 
 <body>
 
-<div class="pager">
+<h2>NU-Pager</h2>
 
-<div class="screen" id="screen">
+<div id="screen"></div>
 
-[11:28] NU: Let's start<br>
-[11:29] NA: Ready at site<br>
-[11:30] NU: Mon arrival OK
-
-</div>
-
-<div class="inputs">
 <input id="name" placeholder="your name">
-<input id="msg" placeholder="type message">
-<button class="btn send" onclick="send()">SEND</button>
-</div>
 
-<div class="buttons">
-<button class="btn">READ</button>
-<button class="btn">MENU</button>
-<button class="btn">SELECT</button>
-<button class="btn">CLR</button>
-<button class="btn">OK</button>
-<button class="btn">POWER</button>
-</div>
+<input id="msg" placeholder="type message">
+
+<button onclick="sendMsg()">SEND</button>
+
+<div class="keypad">
+
+<div class="key">READ</div>
+<div class="key">MENU</div>
+<div class="key">SELECT</div>
+
+<div class="key">CLR</div>
+<div class="key">OK</div>
+<div class="key">POWER</div>
 
 </div>
 
 <script>
 
-function time(){
-const d = new Date()
-return "[" + d.getHours().toString().padStart(2,'0')
-+ ":" + d.getMinutes().toString().padStart(2,'0') + "]"
+const firebaseConfig = {
+apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+authDomain: "xxxx.firebaseapp.com",
+databaseURL: "https://xxxx-default-rtdb.firebaseio.com",
+projectId: "xxxx",
+storageBucket: "xxxx.appspot.com",
+messagingSenderId: "xxxx",
+appId: "xxxx"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+const screen = document.getElementById("screen");
+
+function sendMsg(){
+
+let name = document.getElementById("name").value;
+let msg = document.getElementById("msg").value;
+
+let time = new Date().toLocaleTimeString().slice(0,5);
+
+db.ref("pager").push({
+name:name,
+msg:msg,
+time:time
+});
+
+document.getElementById("msg").value="";
 }
 
-function send(){
+db.ref("pager").on("child_added",function(data){
 
-const name=document.getElementById("name").value
-const msg=document.getElementById("msg").value
+let m = data.val();
 
-if(msg=="") return
+let line = `[${m.time}] ${m.name}: ${m.msg}<br>`;
 
-const screen=document.getElementById("screen")
+screen.innerHTML += line;
 
-screen.innerHTML += "<br>" + time() + " " + name + ": " + msg
+screen.scrollTop = screen.scrollHeight;
 
-screen.scrollTop=screen.scrollHeight
-
-document.getElementById("msg").value=""
-
-}
+});
 
 </script>
 
