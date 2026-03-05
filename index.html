@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NU-PAGER NP-1999</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NU-PAGER Model NP-1999</title>
 
 <style>
 
 body{
-background:#222;
+background:#0d0d0d;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -16,49 +18,62 @@ font-family:monospace;
 }
 
 .pager{
-
-background:#cfcfcf;
-padding:20px;
-border-radius:15px;
 width:340px;
-box-shadow:0 0 20px #000;
-
+background:#1c1c1c;
+border-radius:20px;
+padding:20px;
+box-shadow:0 20px 50px rgba(0,0,0,0.7);
 }
 
 .screen{
-
-background:#9bbc0f;
-color:#111;
-height:220px;
+background:#0b1f0b;
+color:#8aff8a;
+padding:15px;
+height:140px;
+border-radius:10px;
 overflow:auto;
-padding:10px;
 font-size:14px;
-border:6px inset #555;
-margin-bottom:10px;
-
+box-shadow:inset 0 0 20px rgba(0,255,0,0.2);
 }
 
-button{
+.buttons{
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+}
 
-padding:8px;
-margin:3px;
-font-size:14px;
+.btn{
+background:#2a2a2a;
+border:none;
+padding:12px;
+border-radius:10px;
+color:#8aff8a;
+font-weight:bold;
+cursor:pointer;
+}
 
+.btn:active{
+background:#111;
+}
+
+.inputs{
+margin-top:15px;
+display:flex;
+flex-direction:column;
+gap:8px;
 }
 
 input{
-
 padding:8px;
-margin:3px;
-width:95%;
-
+border:none;
+border-radius:6px;
 }
 
-.header{
-
+.send{
+background:#0f3;
+color:#000;
 font-weight:bold;
-margin-bottom:5px;
-
 }
 
 </style>
@@ -68,259 +83,55 @@ margin-bottom:5px;
 
 <div class="pager">
 
-<div class="header">
-NU-PAGER<br>
-Model NP-1999
+<div class="screen" id="screen">
+
+[11:28] NU: Let's start<br>
+[11:29] NA: Ready at site<br>
+[11:30] NU: Mon arrival OK
+
 </div>
 
-<div id="screen" class="screen"></div>
-
+<div class="inputs">
 <input id="name" placeholder="your name">
-<input id="message" placeholder="type message">
+<input id="msg" placeholder="type message">
+<button class="btn send" onclick="send()">SEND</button>
+</div>
 
-<button onclick="send()">SEND</button>
-<button onclick="clearScreen()">CLEAR</button>
-<button onclick="scrollUp()">▲</button>
-<button onclick="scrollDown()">▼</button>
+<div class="buttons">
+<button class="btn">READ</button>
+<button class="btn">MENU</button>
+<button class="btn">SELECT</button>
+<button class="btn">CLR</button>
+<button class="btn">OK</button>
+<button class="btn">POWER</button>
+</div>
 
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-
-apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-authDomain: "nu-pager.firebaseapp.com",
-databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
-projectId: "nu-pager",
-storageBucket: "nu-pager.appspot.com",
-messagingSenderId: "1616905096",
-appId: "1:1616905096:web:a6e426d97612e523f1703d"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const messagesRef = ref(db,"messages");
-
-const screen = document.getElementById("screen");
-
-function beep(){
-
-const ctx = new AudioContext();
-const osc = ctx.createOscillator();
-osc.connect(ctx.destination);
-osc.start();
-osc.stop(ctx.currentTime+0.1);
-
+function time(){
+const d = new Date()
+return "[" + d.getHours().toString().padStart(2,'0')
++ ":" + d.getMinutes().toString().padStart(2,'0') + "]"
 }
 
-window.send = function(){
+function send(){
 
-const name = document.getElementById("name").value || "anon";
-const msg = document.getElementById("message").value;
+const name=document.getElementById("name").value
+const msg=document.getElementById("msg").value
 
-if(msg==="") return;
+if(msg=="") return
 
-const time = new Date().toLocaleTimeString();
+const screen=document.getElementById("screen")
 
-push(messagesRef,{
-name:name,
-text:msg,
-time:time
-});
+screen.innerHTML += "<br>" + time() + " " + name + ": " + msg
 
-document.getElementById("message").value="";
+screen.scrollTop=screen.scrollHeight
+
+document.getElementById("msg").value=""
 
 }
-
-onChildAdded(messagesRef,(data)=>{
-
-const m = data.val();
-
-const line = document.createElement("div");
-
-line.textContent =
-"["+m.time+"] "+m.name+": "+m.text;
-
-screen.appendChild(line);
-
-beep();
-
-screen.scrollTop = screen.scrollHeight;
-
-});
-
-window.clearScreen=function(){
-
-remove(messagesRef);
-screen.innerHTML="";
-
-}
-
-window.scrollUp=function(){
-
-screen.scrollTop -= 40;
-
-}
-
-window.scrollDown=function(){
-
-screen.scrollTop += 40;
-
-}
-
-</script>
-
-</body>
-</html>
-/* ปุ่ม */
-#buttons{
-  margin-top:25px;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:14px;
-}
-
-.pager-btn{
-  background:linear-gradient(#f5f5f5,#cfcfcf);
-  border-radius:18px;
-  padding:14px;
-  text-align:center;
-  font-weight:bold;
-  box-shadow:
-    -3px -3px 6px rgba(255,255,255,0.8),
-    3px 3px 8px rgba(0,0,0,0.3);
-  cursor:pointer;
-  user-select:none;
-}
-
-.pager-btn:active{
-  box-shadow:
-    inset -3px -3px 6px rgba(255,255,255,0.7),
-    inset 3px 3px 6px rgba(0,0,0,0.4);
-}
-
-/* Power */
-.power-btn{
-  margin-top:15px;
-  align-self:center;
-  background:linear-gradient(#ff4d4d,#990000);
-  color:white;
-  padding:8px 20px;
-  border-radius:20px;
-  font-weight:bold;
-  box-shadow:0 4px 8px rgba(0,0,0,0.4);
-  cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div id="device">
-  <div class="speaker"></div>
-
-  <div id="screen">
-    <div id="status">
-      <span>📶▮▮▮</span>
-      <span id="clock">00:00</span>
-      <span>🔋▮▮▮▮</span>
-    </div>
-    <div id="chat">Booting NU Pager 1999...\nReady.\n</div>
-  </div>
-
-  <div class="model-label">Model NP-1999</div>
-
-  <div id="buttons">
-    <div class="pager-btn" onclick="sendMessage()">SEND</div>
-    <div class="pager-btn" onclick="clearChat()">CLR</div>
-    <div class="pager-btn">MENU</div>
-    <div class="pager-btn">▲</div>
-    <div class="pager-btn">▼</div>
-    <div class="pager-btn">OK</div>
-  </div>
-
-  <div class="power-btn" onclick="togglePower()">POWER</div>
-</div>
-
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-  authDomain: "nu-pager.firebaseapp.com",
-  databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
-  projectId: "nu-pager",
-  storageBucket: "nu-pager.firebasestorage.app",
-  messagingSenderId: "1616905096",
-  appId: "1:1616905096:web:a6e426d97612e523f1703d"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-const chatDiv = document.getElementById("chat");
-
-const provider = new GoogleAuthProvider();
-signInWithPopup(auth, provider);
-
-onChildAdded(ref(db, "messages"), (snapshot) => {
-  const data = snapshot.val();
-  const div = document.createElement("div");
-  div.className = "message";
-
-  const time = new Date().toLocaleTimeString();
-  div.textContent = `[${time}] ${data.name}: ${data.text}`;
-
-  chatDiv.appendChild(div);
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-
-  const beep = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-  beep.play();
-
-  if (navigator.vibrate) navigator.vibrate(200);
-});
-
-window.sendMessage = function(){
-  const text = prompt("Enter message:");
-  if(!text) return;
-
-  push(ref(db, "messages"), {
-    name: auth.currentUser.displayName,
-    text: text
-  });
-};
-
-window.clearChat = function(){
-  chatDiv.innerHTML = "";
-};
-
-let powerOn = true;
-window.togglePower = function(){
-  const screen = document.getElementById("screen");
-  if(powerOn){
-    screen.style.background = "#000";
-    chatDiv.innerHTML = "";
-  } else {
-    screen.style.background = "#9bbc0f";
-    chatDiv.innerHTML = "Booting NU Pager 1999...\nReady.\n";
-  }
-  powerOn = !powerOn;
-};
-
-setInterval(() => {
-  const now = new Date();
-  document.getElementById("clock").textContent =
-    now.toLocaleTimeString();
-}, 1000);
 
 </script>
 
