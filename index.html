@@ -10,53 +10,56 @@
 
 body{
 font-family:monospace;
-background:#ddd;
+background:#cfcfcf;
 display:flex;
 justify-content:center;
-margin-top:20px;
+margin-top:30px;
 }
 
 .pager{
 width:320px;
-background:#f4f4f4;
-padding:10px;
-border-radius:8px;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
+background:#e9e9e9;
+padding:12px;
+border-radius:10px;
+box-shadow:0 0 20px rgba(0,0,0,0.4);
 }
 
 .title{
 text-align:center;
 font-size:14px;
-margin-bottom:5px;
+margin-bottom:4px;
+font-weight:bold;
 }
 
 .device{
 text-align:center;
-font-size:12px;
-margin-bottom:10px;
+font-size:11px;
+margin-bottom:8px;
 }
 
 .screen{
-background:#b7d1a4;
-height:140px;
+background:#a8c89c;
+height:150px;
 overflow:auto;
-padding:5px;
-border:2px solid #555;
+padding:6px;
+border:3px inset #333;
 font-size:12px;
 }
 
 input{
 width:100%;
-margin-top:5px;
-padding:6px;
+margin-top:6px;
+padding:7px;
 font-family:monospace;
+font-size:12px;
 }
 
 button{
 width:100%;
-margin-top:5px;
+margin-top:6px;
 padding:8px;
 font-weight:bold;
+cursor:pointer;
 }
 
 .row{
@@ -90,17 +93,18 @@ DEVICE : <span id="deviceId"></span>
 </div>
 
 <div class="screen" id="screen">
-Loading...
+SYSTEM READY
 </div>
 
-<input id="target" placeholder="target device">
-<input id="message" maxlength="80" placeholder="max 80 characters">
+<input id="target" placeholder="TARGET DEVICE">
 
-<button onclick="sendMessage()">SEND</button>
+<input id="message" maxlength="80" placeholder="MAX 80 CHARACTERS">
+
+<button onclick="sendMessage()">SEND MESSAGE</button>
 
 <div class="row">
 <button onclick="read()">READ</button>
-<button onclick="toggleMode()">MENU</button>
+<button onclick="toggleMode()">MODE</button>
 <button onclick="clearMsg()">CLR</button>
 </div>
 
@@ -115,11 +119,11 @@ const firebaseConfig = {
 
 apiKey:"AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
 
-authDomain:"YOUR_PROJECT.firebaseapp.com",
+authDomain:"nu-pager.firebaseapp.com",
 
-databaseURL:"YOUR_DB_URL",
+databaseURL:"https://nu-pager-default-rtdb.firebaseio.com/",
 
-projectId:"YOUR_PROJECT",
+projectId:"nu-pager",
 
 storageBucket:"",
 
@@ -130,6 +134,7 @@ appId:""
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db=firebase.database();
 
 let device=localStorage.getItem("device");
@@ -150,7 +155,7 @@ function sendMessage(){
 
 if(dailyCount>=50){
 
-alert("Daily limit reached");
+alert("DAILY LIMIT REACHED");
 
 return;
 
@@ -160,7 +165,13 @@ let target=document.getElementById("target").value;
 
 let msg=document.getElementById("message").value;
 
-if(!msg)return;
+if(!msg || !target){
+
+alert("ENTER TARGET + MESSAGE");
+
+return;
+
+}
 
 let time=new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
@@ -188,7 +199,7 @@ function read(){
 
 let screen=document.getElementById("screen");
 
-db.ref("messages").limitToLast(20).on("value",snap=>{
+db.ref("messages").limitToLast(30).on("value",snap=>{
 
 screen.innerHTML="";
 
