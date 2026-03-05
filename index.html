@@ -3,293 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <title>NU-PAGER</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <style>
-
-body{
-margin:0;
-background:url("https://i.imgur.com/J3K9QhT.jpg");
-background-size:cover;
-font-family:monospace;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+body {
+  margin: 0;
+  background: url("https://i.imgur.com/3ZQ3ZQw.jpg") center/cover no-repeat;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
-#pager{
-
-width:320px;
-height:520px;
-
-background:#e8e8e8;
-border-radius:25px;
-
-box-shadow:
-inset 0 0 20px #999,
-0 20px 40px rgba(0,0,0,0.6);
-
-padding:20px;
-
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-
+#pager {
+  width: 340px;
+  height: 540px;
+  background: linear-gradient(#d9d9d9, #c4c4c4);
+  border-radius: 30px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5), inset 0 0 10px #999;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #aaa;
 }
 
-#header{
-
-font-weight:bold;
-text-align:center;
-margin-bottom:10px;
-
+#header {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #222;
+  text-shadow: 0 1px 0 #fff, 0 -1px 0 #aaa;
 }
 
-#device{
-font-size:12px;
-color:#444;
+#device {
+  font-size: 12px;
+  color: #444;
 }
 
-#screen{
-
-background:#9fff9f;
-border-radius:10px;
-
-height:220px;
-
-padding:10px;
-
-overflow:auto;
-
-box-shadow:
-inset 0 0 10px #000;
-
+#screen {
+  position: relative;
+  background: linear-gradient(to bottom, #b6ffb6, #9fff9f);
+  border-radius: 10px;
+  height: 220px;
+  padding: 10px;
+  overflow: auto;
+  box-shadow: inset 0 0 8px #000, 0 2px 4px rgba(0,0,0,0.2);
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #000;
 }
 
-.msg{
-margin-bottom:6px;
+#screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  pointer-events: none;
 }
 
-#controls{
-margin-top:10px;
+.msg {
+  margin-bottom: 6px;
 }
 
-input{
-
-width:100%;
-padding:8px;
-margin-top:4px;
-
-border-radius:6px;
-border:none;
-
+#controls {
+  margin-top: 10px;
 }
 
-button{
-
-width:100%;
-padding:12px;
-
-margin-top:6px;
-
-border:none;
-border-radius:8px;
-
-background:#444;
-color:white;
-
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: #f0f0f0;
+  box-shadow: inset 0 1px 2px #ccc;
+  font-family: monospace;
 }
 
-.keypad{
-
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-
-margin-top:10px;
-
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(#555, #333);
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  transition: transform 0.1s;
 }
 
-.key{
-
-background:#bbb;
-padding:10px;
-border-radius:8px;
-text-align:center;
-
+button:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.key {
+  background: linear-gradient(#ccc, #aaa);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 -1px 2px #888;
+  transition: transform 0.1s;
+}
+
+.key:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
 </style>
 </head>
 
 <body>
-
 <div id="pager">
+  <div id="header">
+    NU-PAGER  
+    <div id="device"></div>
+  </div>
 
-<div id="header">
+  <div id="screen"></div>
 
-NU-PAGER  
-<div id="device"></div>
+  <div id="controls">
+    <input id="to" placeholder="send to device id">
+    <input id="name" placeholder="your name">
+    <input id="msg" placeholder="message (80 chars max)">
+    <button onclick="sendMsg()">SEND</button>
+  </div>
 
-</div>
-
-<div id="screen"></div>
-
-<div id="controls">
-
-<input id="to" placeholder="send to device id">
-
-<input id="name" placeholder="your name">
-
-<input id="msg" placeholder="message (80 chars max)">
-
-<button onclick="sendMsg()">SEND</button>
-
-</div>
-
-<div class="keypad">
-
-<div class="key" onclick="readInbox()">READ</div>
-<div class="key">MENU</div>
-<div class="key">SELECT</div>
-
-<div class="key" onclick="clearScreen()">CLR</div>
-<div class="key">OK</div>
-<div class="key">POWER</div>
-
-</div>
-
+  <div class="keypad">
+    <div class="key" onclick="readInbox()">READ</div>
+    <div class="key">MENU</div>
+    <div class="key">SELECT</div>
+    <div class="key" onclick="clearScreen()">CLR</div>
+    <div class="key">OK</div>
+    <div class="key">POWER</div>
+  </div>
 </div>
 
 <script>
-
 const firebaseConfig = {
-
-apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-authDomain: "nu-pager.firebaseapp.com",
-databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
-projectId: "nu-pager",
-storageBucket: "nu-pager.firebasestorage.app",
-messagingSenderId: "1616905096",
-appId: "1:1616905096:web:a6e426d97612e523f1703d"
-
+  apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxS Jj3durM8",
+  authDomain: "nu-pager.firebaseapp.com",
+  databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
+  projectId: "nu-pager",
+  storageBucket: "nu-pager.firebasestorage.app",
+  messagingSenderId: "1616905096",
+  appId: "1:1616905096:web:a6e426d97612e523f1703d"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 
 let screen = document.getElementById("screen");
-
 let deviceID = localStorage.getItem("deviceID");
 
 if(!deviceID){
-
-deviceID = "NP-" + Math.floor(1000 + Math.random()*9000);
-
-localStorage.setItem("deviceID",deviceID);
-
+  deviceID = "NP-" + Math.floor(1000 + Math.random()*9000);
+  localStorage.setItem("deviceID",deviceID);
 }
-
 document.getElementById("device").innerText = "DEVICE : " + deviceID;
 
 function sendMsg(){
+  let to = document.getElementById("to").value;
+  let name = document.getElementById("name").value;
+  let msg = document.getElementById("msg").value.substring(0,80);
+  let time = new Date().toLocaleTimeString().slice(0,5);
 
-let to = document.getElementById("to").value;
+  db.ref("messages").push({
+    from:deviceID,
+    to:to,
+    name:name,
+    msg:msg,
+    time:time,
+    read:false
+  });
 
-let name = document.getElementById("name").value;
-
-let msg = document.getElementById("msg").value.substring(0,80);
-
-let time = new Date().toLocaleTimeString().slice(0,5);
-
-db.ref("messages").push({
-
-from:deviceID,
-to:to,
-name:name,
-msg:msg,
-time:time,
-read:false
-
-});
-
-document.getElementById("msg").value="";
-
+  document.getElementById("msg").value="";
 }
 
 db.ref("messages").on("child_added",function(data){
-
-let m = data.val();
-
-if(m.to === deviceID){
-
-beep();
-
-let line = document.createElement("div");
-
-line.className="msg";
-
-line.innerHTML = "<b>"+m.name+"</b>: "+m.msg;
-
-screen.appendChild(line);
-
-screen.scrollTop = screen.scrollHeight;
-
-}
-
+  let m = data.val();
+  if(m.to === deviceID){
+    beep();
+    let line = document.createElement("div");
+    line.className="msg";
+    line.innerHTML = "<b>"+m.name+"</b>: "+m.msg;
+    screen.appendChild(line);
+    screen.scrollTop = screen.scrollHeight;
+  }
 });
 
 function readInbox(){
-
-screen.innerHTML="";
-
-db.ref("messages").once("value",function(snapshot){
-
-snapshot.forEach(function(data){
-
-let m = data.val();
-
-if(m.to === deviceID){
-
-let line = document.createElement("div");
-
-line.className="msg";
-
-line.innerHTML = "["+m.time+"] "+m.name+": "+m.msg;
-
-screen.appendChild(line);
-
-}
-
-});
-
-});
-
+  screen.innerHTML="";
+  db.ref("messages").once("value",function(snapshot){
+    snapshot.forEach(function(data){
+      let m = data.val();
+      if(m.to === deviceID){
+        let line = document.createElement("div");
+        line.className="msg";
+        line.innerHTML = "["+m.time+"] "+m.name+": "+m.msg;
+        screen.appendChild(line);
+      }
+    });
+  });
 }
 
 function clearScreen(){
-
-screen.innerHTML="";
-
+  screen.innerHTML="";
 }
 
 function beep(){
-
-let audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-
-audio.play();
-
+  let audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  audio.play();
 }
 
+// เพิ่มเสียงคลิกให้ปุ่ม
+document.querySelectorAll(".key, button").forEach(el => {
+  el.addEventListener("click", () => {
+    let clickSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+    clickSound.play();
+  });
+});
 </script>
-
 </body>
 </html>
-
-
