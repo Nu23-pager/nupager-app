@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NU Pager NP-1</title>
+<title>NU Pager NP-1999 CORE</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -18,45 +18,35 @@ padding:20px;
 }
 
 #device{
-background:#222;
-padding:25px;
-border-radius:25px;
-width:320px;
-margin:auto;
-box-shadow:0 0 20px #000;
+margin-bottom:10px;
+font-size:18px;
 }
 
 #screen{
 background:#001a00;
 color:#00ff88;
 padding:15px;
-border-radius:10px;
-height:200px;
+border-radius:12px;
+height:220px;
 overflow:auto;
 text-align:left;
-box-shadow:inset 0 0 10px #00ff88;
-}
-
-#alert{
-text-align:center;
-margin:5px;
-font-weight:bold;
+box-shadow:0 0 10px #00ff88 inset;
 }
 
 input{
-width:90%;
-padding:8px;
+width:85%;
+padding:10px;
 margin:5px;
-border-radius:6px;
+border-radius:8px;
 border:none;
 }
 
 button{
 background:#00ff44;
 border:none;
-padding:10px;
-width:95%;
-border-radius:8px;
+padding:14px;
+width:88%;
+border-radius:10px;
 font-weight:bold;
 margin-top:5px;
 }
@@ -69,21 +59,10 @@ margin-top:20px;
 }
 
 .key{
-background:#444;
+background:#333;
 color:#00ff88;
 padding:12px;
 border-radius:10px;
-cursor:pointer;
-}
-
-@keyframes blink{
-0%{opacity:1;}
-50%{opacity:0;}
-100%{opacity:1;}
-}
-
-.blink{
-animation:blink 1s infinite;
 }
 
 </style>
@@ -91,55 +70,36 @@ animation:blink 1s infinite;
 
 <body>
 
-<h3>NU Pager Network</h3>
+<h2>NU Pager</h2>
 
-<div id="device">
-
-<div id="alert"></div>
+<div id="device"></div>
 
 <div id="screen"></div>
 
-<input id="name" placeholder="your name">
 <input id="msg" placeholder="type message">
 
 <button onclick="sendMsg()">SEND</button>
 
 <div class="keypad">
-
-<div class="key" onclick="readMessages()">READ</div>
-<div class="key" onclick="openMenu()">MENU</div>
-<div class="key" onclick="selectMenu()">SELECT</div>
+<div class="key">READ</div>
+<div class="key">MENU</div>
+<div class="key">SELECT</div>
 
 <div class="key">CLR</div>
 <div class="key">OK</div>
 <div class="key">POWER</div>
-
 </div>
-
-</div>
-
-<audio id="beep">
-<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
-</audio>
 
 <script>
 
 const firebaseConfig = {
-
 apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-
 authDomain: "xxxx.firebaseapp.com",
-
 databaseURL: "https://xxxx-default-rtdb.firebaseio.com",
-
 projectId: "xxxx",
-
 storageBucket: "xxxx.appspot.com",
-
 messagingSenderId: "xxxx",
-
 appId: "xxxx"
-
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -147,18 +107,33 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const screen = document.getElementById("screen");
-const alertBox = document.getElementById("alert");
+const deviceLabel = document.getElementById("device");
+
+let deviceID = localStorage.getItem("deviceID");
+
+if(!deviceID){
+
+let num = Math.floor(Math.random()*50)*2+2000;
+
+deviceID = "NP-" + num;
+
+localStorage.setItem("deviceID",deviceID);
+
+}
+
+deviceLabel.innerHTML = "DEVICE : " + deviceID;
 
 function sendMsg(){
 
-let name = document.getElementById("name").value;
 let msg = document.getElementById("msg").value;
+
+if(msg=="") return;
 
 let time = new Date().toLocaleTimeString().slice(0,5);
 
 db.ref("pager").push({
 
-name:name,
+device:deviceID,
 msg:msg,
 time:time
 
@@ -168,58 +143,17 @@ document.getElementById("msg").value="";
 
 }
 
-db.ref("pager").on("child_added",function(data){
+db.ref("pager").limitToLast(20).on("child_added",function(data){
 
 let m = data.val();
 
-let line = `[${m.time}] ${m.name}: ${m.msg}<br>`;
+let line = "["+m.time+"] "+m.device+" : "+m.msg+"<br>";
 
 screen.innerHTML += line;
 
 screen.scrollTop = screen.scrollHeight;
 
-alertBox.innerHTML="NEW MESSAGE ●";
-
-alertBox.classList.add("blink");
-
-document.getElementById("beep").play();
-
 });
-
-function readMessages(){
-
-alertBox.innerHTML="";
-alertBox.classList.remove("blink");
-
-}
-
-function openMenu(){
-
-screen.innerHTML=`
-
-MENU<br><br>
-
-1 MESSAGES<br>
-2 DEVICE INFO<br>
-3 CLEAR SCREEN
-
-`;
-
-}
-
-function selectMenu(){
-
-screen.innerHTML=`
-
-DEVICE INFO<br><br>
-
-MODEL NP-1<br>
-NETWORK ONLINE<br>
-NU PAGER SYSTEM
-
-`;
-
-}
 
 </script>
 
