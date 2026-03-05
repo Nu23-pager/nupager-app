@@ -1,57 +1,55 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<meta charset="UTF-8">
-<title>NU PAGER NP-1999</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NU PAGER PRO</title>
 
 <style>
 
 body{
 margin:0;
-background:#111;
-font-family:monospace;
-display:flex;
-justify-content:center;
-align-items:center;
 height:100vh;
-}
-
-#device{
-
-width:340px;
-height:520px;
-background:#e8e8e8;
-border-radius:30px;
-box-shadow:
-0 0 20px #000,
-inset 0 0 15px #bbb;
-
 display:flex;
-flex-direction:column;
 align-items:center;
-padding:20px;
+justify-content:center;
+
+background:url("https://images.unsplash.com/photo-1503387762-592deb58ef4e")
+center/cover no-repeat;
+
+font-family:monospace;
 }
 
-#model{
-font-size:14px;
-margin-bottom:5px;
+.pager{
+
+width:92vw;
+max-width:420px;
+
+background:#e9e9e9;
+
+border-radius:18px;
+
+padding:18px;
+
+box-shadow:
+0 8px 20px rgba(0,0,0,0.4),
+inset 0 2px 6px rgba(255,255,255,0.8),
+inset 0 -4px 6px rgba(0,0,0,0.15);
+
 }
 
-#deviceID{
+.title{
+
+text-align:center;
 font-size:13px;
-margin-bottom:10px;
+margin-bottom:8px;
+
 }
 
-#screen{
+.screen{
 
-width:100%;
-height:220px;
+background:#b7cbb0;
 
-background:#cfe7c9;
+height:150px;
 
 border-radius:10px;
 
@@ -59,75 +57,68 @@ padding:10px;
 
 overflow:auto;
 
-box-shadow:inset 0 0 10px #333;
+box-shadow:
+inset 0 0 8px rgba(0,0,0,0.4);
 
 font-size:13px;
 
 }
 
-#newmsg{
-
-color:red;
-
-font-weight:bold;
-
-display:none;
-
-animation:blink 1s infinite;
-
-}
-
-@keyframes blink{
-50%{opacity:0;}
-}
-
 input{
 
-width:95%;
+width:100%;
+margin-top:8px;
 padding:8px;
-margin-top:6px;
-border-radius:6px;
-border:1px solid #999;
+border-radius:8px;
+border:none;
+
+box-shadow:
+inset 0 2px 4px rgba(0,0,0,0.2);
 
 }
 
 button{
 
-width:95%;
+width:100%;
+margin-top:8px;
+
 padding:10px;
-margin-top:6px;
+
 border:none;
-background:#444;
-color:white;
-border-radius:6px;
+
+border-radius:8px;
+
+background:#d0d0d0;
+
+box-shadow:
+0 3px 4px rgba(0,0,0,0.3);
+
+font-weight:bold;
 
 }
 
-.keypad{
-
-margin-top:15px;
+.keys{
 
 display:grid;
-
 grid-template-columns:repeat(3,1fr);
-
-gap:8px;
-
-width:100%;
+gap:6px;
+margin-top:10px;
 
 }
 
 .key{
 
-background:#666;
+padding:10px;
 
-color:white;
-
-padding:12px;
+background:#cfcfcf;
 
 border-radius:8px;
 
 text-align:center;
+
+box-shadow:0 2px 4px rgba(0,0,0,0.3);
+
+font-size:12px;
 
 }
 
@@ -137,25 +128,26 @@ text-align:center;
 
 <body>
 
-<div id="device">
+<div class="pager">
 
-<div id="model">NU-PAGER MODEL NP-1999</div>
+<div class="title">
 
-<div id="deviceID">Loading device...</div>
+NU-PAGER MODEL NP-1999<br>
+DEVICE : <span id="device"></span>
 
-<div id="newmsg">NEW MESSAGE</div>
+</div>
 
-<div id="screen"></div>
+<div id="screen" class="screen"></div>
 
 <input id="name" placeholder="your name">
 
-<input id="to" placeholder="send to (NP-0001)">
+<input id="target" placeholder="target device">
 
 <input id="msg" placeholder="type message">
 
-<button onclick="sendMsg()">SEND</button>
+<button onclick="send()">SEND</button>
 
-<div class="keypad">
+<div class="keys">
 
 <div class="key">READ</div>
 <div class="key">MENU</div>
@@ -169,103 +161,70 @@ text-align:center;
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
 
-const firebaseConfig = {
+var firebaseConfig = {
 
 apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-
-authDomain: "nu-pager.firebaseapp.com",
-
-databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
-
-projectId: "nu-pager",
-
-storageBucket: "nu-pager.appspot.com",
-
-messagingSenderId: "1616905096",
-
-appId: "1:1616905096:web:a6e426d97612e523f1703d"
+authDomain: "YOURDOMAIN",
+databaseURL: "YOURDBURL",
+projectId: "YOURID",
+storageBucket: "",
+messagingSenderId: "",
+appId: ""
 
 };
 
 firebase.initializeApp(firebaseConfig);
 
-const db = firebase.database();
+var db = firebase.database();
 
-const screen = document.getElementById("screen");
+var device = localStorage.device;
 
-const deviceIDText = document.getElementById("deviceID");
+if(!device){
 
-const newMsg = document.getElementById("newmsg");
+device="NP-"+Math.floor(Math.random()*9000+1000);
 
-let myID = localStorage.getItem("pager_id");
-
-function generateID(){
-
-return db.ref("serial").transaction(function(current){
-
-if(current === null){
-
-return 1;
-
-}else{
-
-return current + 1;
+localStorage.device=device;
 
 }
 
-});
+document.getElementById("device").innerText=device;
+
+var screen=document.getElementById("screen");
+
+function time(){
+
+var d=new Date();
+
+return "["+
+("0"+d.getHours()).slice(-2)+":"+
+("0"+d.getMinutes()).slice(-2)+"]";
 
 }
 
-function formatID(n){
+function send(){
 
-return "NP-" + String(n).padStart(4,"0");
+var name=document.getElementById("name").value;
 
-}
+var target=document.getElementById("target").value;
 
-if(!myID){
-
-generateID().then(result=>{
-
-let num = result.snapshot.val();
-
-myID = formatID(num);
-
-localStorage.setItem("pager_id",myID);
-
-deviceIDText.innerText = "DEVICE : " + myID;
-
-});
-
-}else{
-
-deviceIDText.innerText = "DEVICE : " + myID;
-
-}
-
-function sendMsg(){
-
-let name = document.getElementById("name").value;
-
-let msg = document.getElementById("msg").value;
-
-let to = document.getElementById("to").value;
-
-let time = new Date().toLocaleTimeString().slice(0,5);
+var msg=document.getElementById("msg").value;
 
 db.ref("messages").push({
 
-from:myID,
+from:device,
 
 name:name,
 
-to:to,
+to:target,
 
 msg:msg,
 
-time:time
+time:Date.now()
 
 });
 
@@ -273,56 +232,25 @@ document.getElementById("msg").value="";
 
 }
 
-db.ref("messages").on("child_added",function(data){
+db.ref("messages").limitToLast(20).on("child_added",function(s){
 
-let m = data.val();
+var m=s.val();
 
-if(m.to === myID || m.from === myID){
+if(m.to==device){
 
-let line = `[${m.time}] ${m.from} (${m.name}) : ${m.msg}<br>`;
+var line=time()+" "+m.from+" ("+m.name+") : "+m.msg;
 
-screen.innerHTML += line;
+screen.innerHTML+=line+"<br>";
 
-screen.scrollTop = screen.scrollHeight;
+screen.scrollTop=screen.scrollHeight;
 
-newMsg.style.display="block";
-
-beep();
-
-setTimeout(()=>{
-
-newMsg.style.display="none";
-
-},2000);
+navigator.vibrate(200);
 
 }
 
 });
 
-function beep(){
-
-let ctx = new AudioContext();
-
-let osc = ctx.createOscillator();
-
-osc.type="square";
-
-osc.frequency.value=800;
-
-osc.connect(ctx.destination);
-
-osc.start();
-
-setTimeout(()=>{
-
-osc.stop();
-
-},120);
-
-}
-
 </script>
 
 </body>
-
 </html>
