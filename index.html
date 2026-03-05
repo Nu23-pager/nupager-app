@@ -1,245 +1,228 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <title>NU-PAGER</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 
 body{
-background:#d9d9d9;
 font-family:monospace;
-text-align:center;
-padding:20px;
+background:#ddd;
+display:flex;
+justify-content:center;
+margin-top:20px;
 }
 
-h2{
+.pager{
+width:320px;
+background:#f4f4f4;
+padding:10px;
+border-radius:8px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+.title{
+text-align:center;
+font-size:14px;
 margin-bottom:5px;
 }
 
-#userid{
+.device{
+text-align:center;
+font-size:12px;
 margin-bottom:10px;
 }
 
-#chat{
-width:100%;
-max-width:420px;
-height:320px;
-margin:auto;
-background:white;
-border:2px solid black;
-overflow-y:auto;
-padding:10px;
-}
-
-.message{
-margin:4px 0;
-text-align:left;
+.screen{
+background:#b7d1a4;
+height:140px;
+overflow:auto;
+padding:5px;
+border:2px solid #555;
+font-size:12px;
 }
 
 input{
-width:75%;
-padding:10px;
-margin-top:10px;
-font-size:16px;
+width:100%;
+margin-top:5px;
+padding:6px;
+font-family:monospace;
 }
 
 button{
-padding:10px;
-font-size:16px;
+width:100%;
+margin-top:5px;
+padding:8px;
+font-weight:bold;
 }
 
-#limit{
-margin-top:10px;
+.row{
+display:flex;
+gap:5px;
+margin-top:5px;
+}
+
+.row button{
+flex:1;
+}
+
+.industrial{
+background:#222;
+color:white;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h2>NU-PAGER NETWORK</h2>
+<div class="pager" id="pager">
 
-<div id="userid">Loading...</div>
+<div class="title">
+NU-PAGER MODEL NP-1999
+</div>
 
-<div id="chat"></div>
+<div class="device">
+DEVICE : <span id="deviceId"></span>
+</div>
 
-<input id="msg" maxlength="80" placeholder="Max 80 characters">
+<div class="screen" id="screen">
+Loading...
+</div>
+
+<input id="target" placeholder="target device">
+<input id="message" maxlength="80" placeholder="max 80 characters">
 
 <button onclick="sendMessage()">SEND</button>
 
-<div id="limit"></div>
+<div class="row">
+<button onclick="read()">READ</button>
+<button onclick="toggleMode()">MENU</button>
+<button onclick="clearMsg()">CLR</button>
+</div>
 
+</div>
 
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
-import { getDatabase, ref, push, onChildAdded, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-
+<script>
 
 const firebaseConfig = {
 
-apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+apiKey:"AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
 
-authDomain: "PUT_PROJECT.firebaseapp.com",
+authDomain:"YOUR_PROJECT.firebaseapp.com",
 
-databaseURL: "https://PUT_PROJECT-default-rtdb.firebaseio.com",
+databaseURL:"YOUR_DB_URL",
 
-projectId: "PUT_PROJECT",
+projectId:"YOUR_PROJECT",
 
-storageBucket: "PUT_PROJECT.appspot.com",
+storageBucket:"",
 
-messagingSenderId: "XXXX",
+messagingSenderId:"",
 
-appId: "XXXX"
+appId:""
 
-}
+};
 
-const app = initializeApp(firebaseConfig)
-const db = getDatabase(app)
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
+let device=localStorage.getItem("device");
 
-async function createUserID(){
+if(!device){
 
-let saved = localStorage.getItem("nuPagerID")
+device="NP-"+Math.floor(Math.random()*9000+1000);
 
-if(saved){
-document.getElementById("userid").innerText = saved
-return saved
-}
-
-let idRef = ref(db,"lastID")
-
-let snap = await get(idRef)
-
-let last = 0
-
-if(snap.exists()){
-last = snap.val()
-}
-
-let newID = last + 1
-
-await set(idRef,newID)
-
-let userID = "NP-" + String(newID).padStart(4,'0')
-
-localStorage.setItem("nuPagerID",userID)
-
-document.getElementById("userid").innerText = userID
-
-return userID
+localStorage.setItem("device",device);
 
 }
 
-let userID = await createUserID()
+document.getElementById("deviceId").innerText=device;
 
+let dailyCount=localStorage.getItem("count")||0;
 
+function sendMessage(){
 
-function canSend(){
+if(dailyCount>=50){
 
-let today = new Date().toISOString().slice(0,10)
+alert("Daily limit reached");
 
-let data = JSON.parse(localStorage.getItem("nuLimit")) || {
-
-date: today,
-count: 0
-
-}
-
-if(data.date !== today){
-
-data.date = today
-data.count = 0
+return;
 
 }
 
-if(data.count >= 50){
+let target=document.getElementById("target").value;
 
-alert("Daily limit reached (50 messages)")
-return false
+let msg=document.getElementById("message").value;
 
-}
+if(!msg)return;
 
-data.count++
+let time=new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-localStorage.setItem("nuLimit",JSON.stringify(data))
+db.ref("messages").push({
 
-updateLimit()
+from:device,
 
-return true
+to:target,
 
-}
+text:msg,
 
+time:time
 
+});
 
-function updateLimit(){
+document.getElementById("message").value="";
 
-let today = new Date().toISOString().slice(0,10)
+dailyCount++;
 
-let data = JSON.parse(localStorage.getItem("nuLimit")) || {
-
-date: today,
-count: 0
+localStorage.setItem("count",dailyCount);
 
 }
 
-if(data.date !== today){
+function read(){
 
-data.count = 0
+let screen=document.getElementById("screen");
 
-}
+db.ref("messages").limitToLast(20).on("value",snap=>{
 
-document.getElementById("limit").innerText =
-"Messages today : " + data.count + " / 50"
+screen.innerHTML="";
 
-}
+snap.forEach(d=>{
 
-updateLimit()
+let m=d.val();
 
+if(m.to==device || m.from==device){
 
-
-window.sendMessage = function(){
-
-if(!canSend()) return
-
-let text = document.getElementById("msg").value
-
-if(text.trim()=="") return
-
-push(ref(db,"messages"),{
-
-user:userID,
-text:text,
-time:Date.now()
-
-})
-
-document.getElementById("msg").value=""
+screen.innerHTML+=`[${m.time}] ${m.from} : ${m.text}<br>`;
 
 }
 
+});
 
+screen.scrollTop=screen.scrollHeight;
 
-onChildAdded(ref(db,"messages"),(data)=>{
+});
 
-let m = data.val()
+}
 
-let div = document.createElement("div")
+function clearMsg(){
 
-div.className="message"
+document.getElementById("screen").innerHTML="";
 
-div.innerText = m.user + " : " + m.text
+}
 
-document.getElementById("chat").appendChild(div)
+function toggleMode(){
 
-document.getElementById("chat").scrollTop =
-document.getElementById("chat").scrollHeight
+document.getElementById("pager").classList.toggle("industrial");
 
-})
+}
 
+read();
 
 </script>
 
