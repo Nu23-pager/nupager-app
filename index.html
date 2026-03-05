@@ -2,67 +2,61 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NU Pager NP-1999 CORE</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<title>NuPager</title>
 
 <style>
 
 body{
+margin:0;
 background:black;
 color:#00ff88;
 font-family:monospace;
-text-align:center;
-padding:20px;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-#device{
-margin-bottom:10px;
-font-size:18px;
+#pager{
+width:95vw;
+height:90vh;
+border:4px solid #00ff88;
+display:flex;
+flex-direction:column;
+padding:10px;
+box-sizing:border-box;
 }
 
 #screen{
-background:#001a00;
-color:#00ff88;
-padding:15px;
-border-radius:12px;
-height:220px;
+flex:1;
+border:2px solid #00ff88;
+padding:10px;
 overflow:auto;
-text-align:left;
-box-shadow:0 0 10px #00ff88 inset;
+font-size:18px;
 }
 
-input{
-width:85%;
-padding:10px;
-margin:5px;
-border-radius:8px;
-border:none;
+#controls{
+margin-top:10px;
+display:flex;
+gap:10px;
 }
 
 button{
-background:#00ff44;
-border:none;
-padding:14px;
-width:88%;
-border-radius:10px;
-font-weight:bold;
-margin-top:5px;
-}
-
-.keypad{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:10px;
-margin-top:20px;
-}
-
-.key{
-background:#333;
+flex:1;
+font-size:18px;
+padding:10px;
+background:black;
 color:#00ff88;
-padding:12px;
-border-radius:10px;
+border:2px solid #00ff88;
+}
+
+input{
+width:100%;
+font-size:18px;
+padding:10px;
+background:black;
+color:#00ff88;
+border:2px solid #00ff88;
 }
 
 </style>
@@ -70,72 +64,67 @@ border-radius:10px;
 
 <body>
 
-<h2>NU Pager</h2>
+<div id="pager">
 
-<div id="device"></div>
-
-<div id="screen"></div>
+<div id="screen">
+NuPager Booting...
+</div>
 
 <input id="msg" placeholder="type message">
 
-<button onclick="sendMsg()">SEND</button>
-
-<div class="keypad">
-<div class="key">READ</div>
-<div class="key">MENU</div>
-<div class="key">SELECT</div>
-
-<div class="key">CLR</div>
-<div class="key">OK</div>
-<div class="key">POWER</div>
+<div id="controls">
+<button onclick="send()">SEND</button>
+<button onclick="clearMsg()">CLR</button>
+<button onclick="power()">POWER</button>
 </div>
 
-<script>
+</div>
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
-authDomain: "xxxx.firebaseapp.com",
-databaseURL: "https://xxxx-default-rtdb.firebaseio.com",
-projectId: "xxxx",
-storageBucket: "xxxx.appspot.com",
-messagingSenderId: "xxxx",
-appId: "xxxx"
+authDomain: "nu-pager.firebaseapp.com",
+databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
+projectId: "nu-pager",
+storageBucket: "nu-pager.firebasestorage.app",
+messagingSenderId: "1616905096",
+appId: "1:1616905096:web:a6e426d97612e523f1703d",
+measurementId: "G-MTR1HEZTMV"
 };
 
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
-
-const screen = document.getElementById("screen");
-const deviceLabel = document.getElementById("device");
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let deviceID = localStorage.getItem("deviceID");
 
 if(!deviceID){
-
-let num = Math.floor(Math.random()*50)*2+2000;
-
-deviceID = "NP-" + num;
-
+deviceID = "DEV" + Math.floor(Math.random()*10000);
 localStorage.setItem("deviceID",deviceID);
-
 }
 
-deviceLabel.innerHTML = "DEVICE : " + deviceID;
+const screen = document.getElementById("screen");
 
-function sendMsg(){
+screen.innerHTML="Device : "+deviceID+"<br>Ready...";
 
-let msg = document.getElementById("msg").value;
+function beep(){
+let audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+audio.play();
+}
 
-if(msg=="") return;
+window.send=function(){
 
-let time = new Date().toLocaleTimeString().slice(0,5);
+let text=document.getElementById("msg").value;
 
-db.ref("pager").push({
+push(ref(db,"messages"),{
 
 device:deviceID,
-msg:msg,
-time:time
+text:text,
+time:Date.now()
 
 });
 
@@ -143,15 +132,22 @@ document.getElementById("msg").value="";
 
 }
 
-db.ref("pager").limitToLast(20).on("child_added",function(data){
+window.clearMsg=function(){
+screen.innerHTML="";
+}
 
-let m = data.val();
+window.power=function(){
+location.reload();
+}
 
-let line = "["+m.time+"] "+m.device+" : "+m.msg+"<br>";
+onChildAdded(ref(db,"messages"),(data)=>{
 
-screen.innerHTML += line;
+let m=data.val();
 
-screen.scrollTop = screen.scrollHeight;
+screen.innerHTML+=
+"<br>"+m.device+" : "+m.text;
+
+beep();
 
 });
 
