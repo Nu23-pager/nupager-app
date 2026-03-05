@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
 <title>NU-PAGER</title>
 
@@ -10,74 +11,117 @@
 
 body{
 font-family:monospace;
-background:#cfcfcf;
+background:#dcdcdc;
 display:flex;
 justify-content:center;
-margin-top:30px;
+margin-top:20px;
 }
 
+/* ตัวเครื่อง pager */
+
 .pager{
-width:320px;
-background:#e9e9e9;
-padding:12px;
-border-radius:10px;
-box-shadow:0 0 20px rgba(0,0,0,0.4);
+width:92vw;
+max-width:420px;
+background:#f4f4f4;
+padding:14px;
+border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+margin:auto;
 }
+
+/* หัวเครื่อง */
 
 .title{
 text-align:center;
-font-size:14px;
-margin-bottom:4px;
+font-size:16px;
 font-weight:bold;
+letter-spacing:1px;
+margin-bottom:2px;
 }
 
 .device{
 text-align:center;
-font-size:11px;
-margin-bottom:8px;
+font-size:13px;
+margin-bottom:10px;
 }
 
+/* หน้าจอ LCD */
+
 .screen{
-background:#a8c89c;
-height:150px;
+background:#9fbf8f;
+height:180px;
 overflow:auto;
-padding:6px;
-border:3px inset #333;
-font-size:12px;
+padding:8px;
+border:4px solid #222;
+border-radius:6px;
+font-size:13px;
+line-height:1.4;
+box-shadow:
+inset 0 0 8px rgba(0,0,0,0.5);
 }
+
+/* ช่องกรอก */
 
 input{
 width:100%;
 margin-top:6px;
-padding:7px;
+padding:8px;
+border-radius:6px;
+border:1px solid #999;
 font-family:monospace;
-font-size:12px;
+font-size:14px;
 }
+
+/* ปุ่ม */
 
 button{
 width:100%;
-margin-top:6px;
-padding:8px;
+margin-top:8px;
+padding:10px;
+border-radius:8px;
+border:none;
+background:#e0e0e0;
 font-weight:bold;
-cursor:pointer;
+font-size:14px;
 }
+
+/* ปุ่มแถวล่าง */
 
 .row{
 display:flex;
-gap:5px;
-margin-top:5px;
+gap:6px;
+margin-top:6px;
 }
 
 .row button{
 flex:1;
 }
 
+/* โหมด industrial */
+
 .industrial{
 background:#222;
 color:white;
 }
 
+/* Samsung สีดำ */
+
+button{
+color:black;
+}
+
+/* iPhone */
+
+@supports (-webkit-touch-callout: none) {
+
+button{
+color:#007aff;
+}
+
+}
+
 </style>
+
 </head>
 
 <body>
@@ -93,10 +137,10 @@ DEVICE : <span id="deviceId"></span>
 </div>
 
 <div class="screen" id="screen">
-SYSTEM READY
+Connecting...
 </div>
 
-<input id="target" placeholder="TARGET DEVICE">
+<input id="target" placeholder="TARGET DEVICE (ex: NP-0002)">
 
 <input id="message" maxlength="80" placeholder="MAX 80 CHARACTERS">
 
@@ -104,7 +148,7 @@ SYSTEM READY
 
 <div class="row">
 <button onclick="read()">READ</button>
-<button onclick="toggleMode()">MODE</button>
+<button onclick="toggleMode()">MENU</button>
 <button onclick="clearMsg()">CLR</button>
 </div>
 
@@ -115,15 +159,17 @@ SYSTEM READY
 
 <script>
 
+/* Firebase config */
+
 const firebaseConfig = {
 
 apiKey:"AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
 
-authDomain:"nu-pager.firebaseapp.com",
+authDomain:"YOUR_PROJECT.firebaseapp.com",
 
-databaseURL:"https://nu-pager-default-rtdb.firebaseio.com/",
+databaseURL:"YOUR_DB_URL",
 
-projectId:"nu-pager",
+projectId:"YOUR_PROJECT",
 
 storageBucket:"",
 
@@ -137,6 +183,8 @@ firebase.initializeApp(firebaseConfig);
 
 const db=firebase.database();
 
+/* สร้าง device id */
+
 let device=localStorage.getItem("device");
 
 if(!device){
@@ -149,40 +197,41 @@ localStorage.setItem("device",device);
 
 document.getElementById("deviceId").innerText=device;
 
+/* limit message */
+
 let dailyCount=localStorage.getItem("count")||0;
+
+/* ส่งข้อความ */
 
 function sendMessage(){
 
 if(dailyCount>=50){
 
-alert("DAILY LIMIT REACHED");
+alert("Daily limit reached (50)");
 
 return;
 
 }
 
-let target=document.getElementById("target").value;
+let target=document.getElementById("target").value.trim();
 
-let msg=document.getElementById("message").value;
+let msg=document.getElementById("message").value.trim();
 
-if(!msg || !target){
+if(!target || !msg){
 
-alert("ENTER TARGET + MESSAGE");
+alert("Enter target and message");
 
 return;
 
 }
 
-let time=new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+let time=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
 db.ref("messages").push({
 
 from:device,
-
 to:target,
-
 text:msg,
-
 time:time
 
 });
@@ -195,11 +244,13 @@ localStorage.setItem("count",dailyCount);
 
 }
 
+/* อ่านข้อความ */
+
 function read(){
 
 let screen=document.getElementById("screen");
 
-db.ref("messages").limitToLast(30).on("value",snap=>{
+db.ref("messages").limitToLast(50).on("value",snap=>{
 
 screen.innerHTML="";
 
@@ -207,7 +258,7 @@ snap.forEach(d=>{
 
 let m=d.val();
 
-if(m.to==device || m.from==device){
+if(m.to===device || m.from===device){
 
 screen.innerHTML+=`[${m.time}] ${m.from} : ${m.text}<br>`;
 
@@ -221,17 +272,23 @@ screen.scrollTop=screen.scrollHeight;
 
 }
 
+/* ล้างหน้าจอ */
+
 function clearMsg(){
 
 document.getElementById("screen").innerHTML="";
 
 }
 
+/* โหมดเครื่อง */
+
 function toggleMode(){
 
 document.getElementById("pager").classList.toggle("industrial");
 
 }
+
+/* โหลดข้อความ */
 
 read();
 
