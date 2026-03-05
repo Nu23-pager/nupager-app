@@ -1,120 +1,182 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NU Pager 1999</title>
+<title>NU-PAGER NP-1999</title>
 
 <style>
+
 body{
-  margin:0;
-  background:#777;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  font-family:monospace;
+background:#222;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:monospace;
 }
 
-/* ตัวเครื่อง */
-#device{
-  position:relative;
-  width:340px;
-  height:640px;
-  background:linear-gradient(#e0e0e0,#bdbdbd);
-  border-radius:45px;
-  padding:20px;
-  box-shadow:
-    inset -5px -5px 10px rgba(0,0,0,0.2),
-    inset 5px 5px 10px rgba(255,255,255,0.6),
-    0 25px 50px rgba(0,0,0,0.5);
-  display:flex;
-  flex-direction:column;
+.pager{
+
+background:#cfcfcf;
+padding:20px;
+border-radius:15px;
+width:340px;
+box-shadow:0 0 20px #000;
+
 }
 
-/* ลำโพง */
-.speaker{
-  width:60px;
-  height:6px;
-  background:#555;
-  border-radius:10px;
-  align-self:center;
-  margin-bottom:10px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+.screen{
+
+background:#9bbc0f;
+color:#111;
+height:220px;
+overflow:auto;
+padding:10px;
+font-size:14px;
+border:6px inset #555;
+margin-bottom:10px;
+
 }
 
-/* จอ */
-#screen{
-  position:relative;
-  overflow:hidden;
-  background:#9bbc0f;
-  border:10px solid #444;
-  border-radius:20px;
-  padding:10px;
-  height:300px;
-  display:flex;
-  flex-direction:column;
-  box-shadow:
-    inset -4px -4px 6px rgba(0,0,0,0.3),
-    inset 4px 4px 6px rgba(255,255,255,0.3);
+button{
+
+padding:8px;
+margin:3px;
+font-size:14px;
+
 }
 
-/* แสงสะท้อน */
-#screen::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:40%;
-  background:linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.25),
-    rgba(255,255,255,0.05),
-    transparent
-  );
-  pointer-events:none;
+input{
+
+padding:8px;
+margin:3px;
+width:95%;
+
 }
 
-/* dot matrix */
-#screen::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background-image: radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
-  background-size:3px 3px;
-  pointer-events:none;
+.header{
+
+font-weight:bold;
+margin-bottom:5px;
+
 }
 
-/* status bar */
-#status{
-  display:flex;
-  justify-content:space-between;
-  font-size:12px;
-  color:black;
-  margin-bottom:5px;
+</style>
+</head>
+
+<body>
+
+<div class="pager">
+
+<div class="header">
+NU-PAGER<br>
+Model NP-1999
+</div>
+
+<div id="screen" class="screen"></div>
+
+<input id="name" placeholder="your name">
+<input id="message" placeholder="type message">
+
+<button onclick="send()">SEND</button>
+<button onclick="clearScreen()">CLEAR</button>
+<button onclick="scrollUp()">▲</button>
+<button onclick="scrollDown()">▼</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCBSuoBKR6R8UNIX3u5q1_3VxSJj3durM8",
+authDomain: "nu-pager.firebaseapp.com",
+databaseURL: "https://nu-pager-default-rtdb.firebaseio.com",
+projectId: "nu-pager",
+storageBucket: "nu-pager.appspot.com",
+messagingSenderId: "1616905096",
+appId: "1:1616905096:web:a6e426d97612e523f1703d"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const messagesRef = ref(db,"messages");
+
+const screen = document.getElementById("screen");
+
+function beep(){
+
+const ctx = new AudioContext();
+const osc = ctx.createOscillator();
+osc.connect(ctx.destination);
+osc.start();
+osc.stop(ctx.currentTime+0.1);
+
 }
 
-#chat{
-  flex:1;
-  overflow-y:auto;
-  color:black;
-  font-size:13px;
+window.send = function(){
+
+const name = document.getElementById("name").value || "anon";
+const msg = document.getElementById("message").value;
+
+if(msg==="") return;
+
+const time = new Date().toLocaleTimeString();
+
+push(messagesRef,{
+name:name,
+text:msg,
+time:time
+});
+
+document.getElementById("message").value="";
+
 }
 
-.message{
-  margin-bottom:5px;
+onChildAdded(messagesRef,(data)=>{
+
+const m = data.val();
+
+const line = document.createElement("div");
+
+line.textContent =
+"["+m.time+"] "+m.name+": "+m.text;
+
+screen.appendChild(line);
+
+beep();
+
+screen.scrollTop = screen.scrollHeight;
+
+});
+
+window.clearScreen=function(){
+
+remove(messagesRef);
+screen.innerHTML="";
+
 }
 
-/* รุ่น */
-.model-label{
-  text-align:center;
-  font-size:11px;
-  margin-top:6px;
-  color:#444;
-  letter-spacing:2px;
+window.scrollUp=function(){
+
+screen.scrollTop -= 40;
+
 }
 
+window.scrollDown=function(){
+
+screen.scrollTop += 40;
+
+}
+
+</script>
+
+</body>
+</html>
 /* ปุ่ม */
 #buttons{
   margin-top:25px;
