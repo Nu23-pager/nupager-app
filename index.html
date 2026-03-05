@@ -11,55 +11,78 @@
 <style>
 body {
   margin: 0;
-  background: url("https://i.imgur.com/3ZQ3ZQw.jpg") center/cover no-repeat; /* โต๊ะไม้ */
+  background: url("https://i.imgur.com/3ZQ3ZQw.jpg") center/cover no-repeat;
+  font-family: 'Courier New', monospace;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  font-family: 'Courier New', monospace;
-}
-#pager {
-  width: 400px;
-  height: 600px;
-  background: url("assets/nu-pager-frame.png") no-repeat center/contain;
-  position: relative;
 }
 
-/* หน้าจอ LCD */
+#pager {
+  width: 340px;
+  height: 540px;
+  background: linear-gradient(#d9d9d9, #c4c4c4);
+  border-radius: 30px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5), inset 0 0 10px #999;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #aaa;
+}
+
+#header {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #222;
+  text-shadow: 0 1px 0 #fff, 0 -1px 0 #aaa;
+}
+
+#device {
+  font-size: 12px;
+  color: #444;
+}
+
 #screen {
-  position: absolute;
-  top: 105px;   /* ตรงช่องหน้าจอใน PNG */
-  left: 42px;
-  width: 316px;
-  height: 176px;
+  position: relative;
   background: linear-gradient(to bottom, #b6ffb6, #9fff9f);
-  border-radius: 8px;
-  box-shadow: inset 0 0 8px #000;
+  border-radius: 10px;
+  height: 220px;
+  padding: 10px;
   overflow: auto;
-  padding: 8px;
+  box-shadow: inset 0 0 8px #000, 0 2px 4px rgba(0,0,0,0.2);
+  font-family: 'Courier New', monospace;
   font-size: 14px;
   color: #000;
 }
+
 #screen::before {
   content: "";
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 40%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
   background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
-  border-radius: 8px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   pointer-events: none;
 }
 
-/* ช่องกรอกข้อความ */
-#controls {
-  position: absolute;
-  top: 300px;   /* ตรงช่อง input */
-  left: 42px;
-  width: 316px;
+.msg {
+  margin-bottom: 6px;
 }
+
+#controls {
+  margin-top: 10px;
+}
+
 input {
   width: 100%;
-  padding: 6px;
+  padding: 8px;
   margin-top: 4px;
   border-radius: 6px;
   border: 1px solid #999;
@@ -67,9 +90,10 @@ input {
   box-shadow: inset 0 1px 2px #ccc;
   font-family: monospace;
 }
+
 button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 6px;
   border: none;
   border-radius: 8px;
@@ -79,31 +103,43 @@ button {
   box-shadow: 0 2px 4px rgba(0,0,0,0.4);
   transition: transform 0.1s;
 }
+
 button:active {
   transform: translateY(2px);
   box-shadow: none;
 }
 
-/* ปุ่มกด */
-.key {
-  position: absolute;
-  width: 60px;
-  height: 30px;
-  background: transparent;
-  cursor: pointer;
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
 }
-/* ตำแหน่งปุ่มตรงกับ PNG */
-#readBtn { top: 510px; left: 42px; }
-#menuBtn { top: 510px; left: 122px; }
-#selectBtn { top: 510px; left: 202px; }
-#clrBtn { top: 550px; left: 42px; }
-#okBtn { top: 550px; left: 122px; }
-#powerBtn { top: 550px; left: 202px; }
+
+.key {
+  background: linear-gradient(#ccc, #aaa);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 -1px 2px #888;
+  transition: transform 0.1s;
+}
+
+.key:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
 </style>
 </head>
 
 <body>
 <div id="pager">
+  <div id="header">
+    NU-PAGER  
+    <div id="device"></div>
+  </div>
+
   <div id="screen"></div>
 
   <div id="controls">
@@ -113,13 +149,14 @@ button:active {
     <button onclick="sendMsg()">SEND</button>
   </div>
 
-  <!-- ปุ่มกด -->
-  <div id="readBtn" class="key" onclick="readInbox()"></div>
-  <div id="menuBtn" class="key"></div>
-  <div id="selectBtn" class="key"></div>
-  <div id="clrBtn" class="key" onclick="clearScreen()"></div>
-  <div id="okBtn" class="key"></div>
-  <div id="powerBtn" class="key"></div>
+  <div class="keypad">
+    <div class="key" onclick="readInbox()">READ</div>
+    <div class="key">MENU</div>
+    <div class="key">SELECT</div>
+    <div class="key" onclick="clearScreen()">CLR</div>
+    <div class="key">OK</div>
+    <div class="key">POWER</div>
+  </div>
 </div>
 
 <script>
@@ -132,15 +169,18 @@ const firebaseConfig = {
   messagingSenderId: "1616905096",
   appId: "1:1616905096:web:a6e426d97612e523f1703d"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let screen = document.getElementById("screen");
 let deviceID = localStorage.getItem("deviceID");
+
 if(!deviceID){
   deviceID = "NP-" + Math.floor(1000 + Math.random()*9000);
   localStorage.setItem("deviceID",deviceID);
 }
+document.getElementById("device").innerText = "DEVICE : " + deviceID;
 
 function sendMsg(){
   let to = document.getElementById("to").value;
@@ -156,6 +196,7 @@ function sendMsg(){
     time:time,
     read:false
   });
+
   document.getElementById("msg").value="";
 }
 
@@ -195,7 +236,7 @@ function beep(){
   audio.play();
 }
 
-// เสียงคลิกปุ่ม
+// เพิ่มเสียงคลิกให้ปุ่ม
 document.querySelectorAll(".key, button").forEach(el => {
   el.addEventListener("click", () => {
     let clickSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
