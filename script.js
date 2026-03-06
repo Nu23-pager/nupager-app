@@ -4,7 +4,8 @@ import {
   ref,
   push,
   runTransaction,
-  onChildAdded
+  onChildAdded,
+  get
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -22,78 +23,115 @@ const db = getDatabase(app);
 
 const deviceEl = document.getElementById("device");
 const screenEl = document.getElementById("screen");
+const toEl = document.getElementById("to");
+const fromEl = document.getElementById("from");
+const messageEl = document.getElementById("message");
 
 let deviceId = localStorage.getItem("deviceID") || "";
-
-// แสดงสถานะก่อน
-if (deviceEl) {
-  deviceEl.innerText = "DEVICE : loading...";
-}
+let inbox = [];
 
 function setDeviceText(text) {
-  if (deviceEl) {
-    deviceEl.innerText = text;
-  }
+  if (deviceEl) deviceEl.innerText = text;
+}
+
+function addLine(text, className = "msg") {
+  if (!screenEl) return;
+  const line = document.createElement("div");
+  line.className = className;
+  line.innerText = text;
+  screenEl.appendChild(line);
+  screenEl.scrollTop = screenEl.scrollHeight;
+}
+
+function clearScreen() {
+  if (screenEl) screenEl.innerHTML = "";
+}
+window.clearScreen = clearScreen;
+
+function formatTime(timestamp) {
+  if (!timestamp) return "--:--";
+  const d = new Date(timestamp);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 function beep() {
   try {
     const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    audio.volume = 0.5;
+    audio.volume = 0.45;
     audio.play().catch(() => {});
   } catch (e) {
-    console.log("Beep blocked:", e);
+    console.log("beep blocked", e);
   }
 }
 
-function formatTime(timestamp) {
-  if (!timestamp) return "--:--";
-  const date = new Date(timestamp);
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mm = String(date.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
+function buttonClickSound() {
+  try {
+    const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+    audio.volume = 0.2;
+    audio.play().catch(() => {});
+  } catch (e) {
+    console.log("click blocked", e);
+  }
+}
+
+document.querySelectorAll(".key, button").forEach((el) => {
+  el.addEventListener("click", () => {
+    buttonClickSound();
+  });
+});
+
+function randomLocalId() {
+  return "NU-" + String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
 }
 
 async function registerDevice() {
   try {
-    // ถ้ามีเลขในเครื่องอยู่แล้ว ใช้เลขเดิมทันที
     if (deviceId) {
       setDeviceText("DEVICE : " + deviceId);
-      console.log("Device ID (cached):", deviceId);
+      addLine("Ready.");
       return;
     }
 
     const counterRef = ref(db, "serial");
-
     const result = await runTransaction(counterRef, (current) => {
       return (current || 0) + 1;
     });
 
-    const number = result.snapshot.val();
-    deviceId = "NU-" + String(number).padStart(4, "0");
+    let number = null;
+
+    if (result && result.snapshot) {
+      number = result.snapshot.val();
+    }
+
+    if (!number) {
+      deviceId = randomLocalId();
+    } else {
+      deviceId = "NU-" + String(number).padStart(4, "0");
+    }
 
     localStorage.setItem("deviceID", deviceId);
     setDeviceText("DEVICE : " + deviceId);
-
-    console.log("Device ID (firebase):", deviceId);
+    addLine("Ready.");
   } catch (error) {
     console.error("registerDevice error:", error);
-
-    // fallback กันหน้าว่าง
-    deviceId = "NU-LOCAL";
+    deviceId = randomLocalId();
     localStorage.setItem("deviceID", deviceId);
     setDeviceText("DEVICE : " + deviceId);
+    addLine("Offline register fallback.");
   }
 }
 
-window.sendMessage = function () {
-  const fromInput = document.getElementById("from");
-  const toInput = document.getElementById("to");
-  const messageInput = document.getElementById("message");
+window.sendMessage = async function () {
+  const to = toEl ? toEl.value.trim() : "";
+  const message = messageEl ? messageEl.value.trim().slice(0, 80) : "";
+  const from = fromEl && fromEl.value.trim() !== "" ? fromEl.value.trim() : deviceId;
 
-  const to = toInput ? toInput.value.trim() : "";
-  const message = messageInput ? messageInput.value.trim().slice(0, 80) : "";
-  const from = fromInput && fromInput.value.trim() !== "" ? fromInput.value.trim() : deviceId;
+  if (!deviceId) {
+    alert("Device not ready");
+    return;
+  }
 
   if (!to) {
     alert("Please enter target device ID");
@@ -105,18 +143,20 @@ window.sendMessage = function () {
     return;
   }
 
-  push(ref(db, "messages"), {
-    from: from,
-    to: to,
-    message: message,
-    time: Date.now()
-  });
+  try {
+    await push(ref(db, "messages"), {
+      from,
+      to,
+      message,
+      time: Date.now()
+    });
 
-  if (messageInput) {
-    messageInput.value = "";
+    if (messageEl) messageEl.value = "";
+    addLine(`[${formatTime(Date.now())}] TO ${to} : ${message}`);
+  } catch (error) {
+    console.error("send error:", error);
+    alert("Send failed");
   }
-
-  alert("Message sent!");
 };
 
 function startMessageListener() {
@@ -128,22 +168,50 @@ function startMessageListener() {
     if (!deviceId) return;
 
     if (data.to === deviceId) {
-      if (!screenEl) return;
+      inbox.push(data);
 
-      const msg = document.createElement("div");
-      msg.className = "msg";
-      msg.innerText = `[${formatTime(data.time)}] ${data.from} : ${data.message}`;
-
-      screenEl.appendChild(msg);
-      screenEl.scrollTop = screenEl.scrollHeight;
-
+      addLine(`[${formatTime(data.time)}] ${data.from} : ${data.message}`);
       beep();
     }
   });
 }
 
+window.readInbox = function () {
+  clearScreen();
+
+  if (inbox.length === 0) {
+    addLine("No messages.");
+    return;
+  }
+
+  inbox.forEach((m) => {
+    addLine(`[${formatTime(m.time)}] ${m.from} : ${m.message}`);
+  });
+};
+
+async function loadOldInbox() {
+  try {
+    const snapshot = await get(ref(db, "messages"));
+    if (!snapshot.exists()) return;
+
+    const temp = [];
+    snapshot.forEach((child) => {
+      const m = child.val();
+      if (m && m.to === deviceId) {
+        temp.push(m);
+      }
+    });
+
+    temp.sort((a, b) => (a.time || 0) - (b.time || 0));
+    inbox = temp;
+  } catch (error) {
+    console.error("loadOldInbox error:", error);
+  }
+}
+
 async function initPager() {
   await registerDevice();
+  await loadOldInbox();
   startMessageListener();
 }
 
