@@ -20,14 +20,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let deviceId = localStorage.getItem("deviceID");
+const deviceEl = document.getElementById("device");
+const screenEl = document.getElementById("screen");
 
-/**
- * ลงทะเบียนเครื่องครั้งแรก
- * ใช้ serial ใน Firebase เพื่อสร้าง NU-0001, NU-0002 ...
- */
+let deviceId = localStorage.getItem("deviceID") || "";
+
+// แสดงสถานะก่อน
+if (deviceEl) {
+  deviceEl.innerText = "DEVICE : loading...";
+}
+
+function setDeviceText(text) {
+  if (deviceEl) {
+    deviceEl.innerText = text;
+  }
+}
+
+function beep() {
+  try {
+    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {
+    console.log("Beep blocked:", e);
+  }
+}
+
+function formatTime(timestamp) {
+  if (!timestamp) return "--:--";
+  const date = new Date(timestamp);
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 async function registerDevice() {
-  if (!deviceId) {
+  try {
+    // ถ้ามีเลขในเครื่องอยู่แล้ว ใช้เลขเดิมทันที
+    if (deviceId) {
+      setDeviceText("DEVICE : " + deviceId);
+      console.log("Device ID (cached):", deviceId);
+      return;
+    }
+
     const counterRef = ref(db, "serial");
 
     const result = await runTransaction(counterRef, (current) => {
@@ -36,20 +71,21 @@ async function registerDevice() {
 
     const number = result.snapshot.val();
     deviceId = "NU-" + String(number).padStart(4, "0");
-    localStorage.setItem("deviceId", deviceID);
-  }
 
-  const deviceEl = document.getElementById("device");
-  if (deviceEl) {
-    deviceEl.innerText = "DEVICE : " + deviceId;
-  }
+    localStorage.setItem("deviceID", deviceId);
+    setDeviceText("DEVICE : " + deviceId);
 
-  console.log("Device ID:", deviceId);
+    console.log("Device ID (firebase):", deviceId);
+  } catch (error) {
+    console.error("registerDevice error:", error);
+
+    // fallback กันหน้าว่าง
+    deviceId = "NU-LOCAL";
+    localStorage.setItem("deviceID", deviceId);
+    setDeviceText("DEVICE : " + deviceId);
+  }
 }
 
-/**
- * ส่งข้อความ
- */
 window.sendMessage = function () {
   const fromInput = document.getElementById("from");
   const toInput = document.getElementById("to");
@@ -83,63 +119,29 @@ window.sendMessage = function () {
   alert("Message sent!");
 };
 
-/**
- * รับข้อความแบบ realtime
- * แสดงเฉพาะข้อความที่ส่งมาหาเครื่องนี้
- */
 function startMessageListener() {
   const messagesRef = ref(db, "messages");
 
   onChildAdded(messagesRef, (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
+    if (!deviceId) return;
 
     if (data.to === deviceId) {
-      const screen = document.getElementById("screen");
-      if (!screen) return;
+      if (!screenEl) return;
 
       const msg = document.createElement("div");
       msg.className = "msg";
+      msg.innerText = `[${formatTime(data.time)}] ${data.from} : ${data.message}`;
 
-      const timeText = formatTime(data.time);
-      msg.innerText = `[${timeText}] ${data.from} : ${data.message}`;
-
-      screen.appendChild(msg);
-      screen.scrollTop = screen.scrollHeight;
+      screenEl.appendChild(msg);
+      screenEl.scrollTop = screenEl.scrollHeight;
 
       beep();
     }
   });
 }
 
-/**
- * จัดรูปเวลา
- */
-function formatTime(timestamp) {
-  if (!timestamp) return "--:--";
-
-  const date = new Date(timestamp);
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mm = String(date.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
-
-/**
- * เสียงเตือนแบบเบา ๆ
- */
-function beep() {
-  try {
-    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
-  } catch (e) {
-    console.log("Beep blocked:", e);
-  }
-}
-
-/**
- * เริ่มระบบ
- */
 async function initPager() {
   await registerDevice();
   startMessageListener();
