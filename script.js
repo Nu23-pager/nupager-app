@@ -20,7 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let deviceId = localStorage.getItem("deviceId");
+let deviceId = localStorage.getItem("deviceID");
 
 /**
  * ลงทะเบียนเครื่องครั้งแรก
@@ -36,7 +36,7 @@ async function registerDevice() {
 
     const number = result.snapshot.val();
     deviceId = "NU-" + String(number).padStart(4, "0");
-    localStorage.setItem("deviceId", deviceId);
+    localStorage.setItem("deviceId", deviceID);
   }
 
   const deviceEl = document.getElementById("device");
