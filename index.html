@@ -158,12 +158,11 @@ button:active {
 
   <div id="controls">
     <input id="to" placeholder="send to device id">
-    <input id="from" placeholder="your name">
-    <input id="message" maxlength="80" placeholder="message (80 chars max)">
-    <button onclick="sendMessage()">SEND</button>
-  </div>
+<input id="from" placeholder="your name">
+<input id="message" maxlength="80" placeholder="message (80 chars max)">
+<button onclick="sendMessage()">SEND</button>
 
-  <div class="keypad">
+  <div class="key" onclick="readInbox()">READ</div>
     <div class="key" onclick="readInbox()">READ</div>
     <div class="key">MENU</div>
     <div class="key">SELECT</div>
