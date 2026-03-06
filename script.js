@@ -43,10 +43,9 @@ function addLine(text, className = "msg") {
   screenEl.scrollTop = screenEl.scrollHeight;
 }
 
-function clearScreen() {
+window.clearScreen = function () {
   if (screenEl) screenEl.innerHTML = "";
-}
-window.clearScreen = clearScreen;
+};
 
 function formatTime(timestamp) {
   if (!timestamp) return "--:--";
@@ -66,61 +65,25 @@ function beep() {
   }
 }
 
-function buttonClickSound() {
-  try {
-    const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
-    audio.volume = 0.2;
-    audio.play().catch(() => {});
-  } catch (e) {
-    console.log("click blocked", e);
-  }
-}
-
-document.querySelectorAll(".key, button").forEach((el) => {
-  el.addEventListener("click", () => {
-    buttonClickSound();
-  });
-});
-
-function randomLocalId() {
-  return "NU-" + String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
-}
-
 async function registerDevice() {
-  try {
-    if (deviceId) {
-      setDeviceText("DEVICE : " + deviceId);
-      addLine("Ready.");
-      return;
-    }
-
-    const counterRef = ref(db, "serial");
-    const result = await runTransaction(counterRef, (current) => {
-      return (current || 0) + 1;
-    });
-
-    let number = null;
-
-    if (result && result.snapshot) {
-      number = result.snapshot.val();
-    }
-
-    if (!number) {
-      deviceId = randomLocalId();
-    } else {
-      deviceId = "NU-" + String(number).padStart(4, "0");
-    }
-
-    localStorage.setItem("deviceID", deviceId);
+  if (deviceId) {
     setDeviceText("DEVICE : " + deviceId);
     addLine("Ready.");
-  } catch (error) {
-    console.error("registerDevice error:", error);
-    deviceId = randomLocalId();
-    localStorage.setItem("deviceID", deviceId);
-    setDeviceText("DEVICE : " + deviceId);
-    addLine("Offline register fallback.");
+    return;
   }
+
+  const counterRef = ref(db, "serial");
+
+  const result = await runTransaction(counterRef, (current) => {
+    return (current || 0) + 1;
+  });
+
+  const number = result.snapshot.val();
+  deviceId = "NP-" + String(number).padStart(4, "0");
+
+  localStorage.setItem("deviceID", deviceId);
+  setDeviceText("DEVICE : " + deviceId);
+  addLine("Ready.");
 }
 
 window.sendMessage = async function () {
@@ -143,20 +106,15 @@ window.sendMessage = async function () {
     return;
   }
 
-  try {
-    await push(ref(db, "messages"), {
-      from,
-      to,
-      message,
-      time: Date.now()
-    });
+  await push(ref(db, "messages"), {
+    from,
+    to,
+    message,
+    time: Date.now()
+  });
 
-    if (messageEl) messageEl.value = "";
-    addLine(`[${formatTime(Date.now())}] TO ${to} : ${message}`);
-  } catch (error) {
-    console.error("send error:", error);
-    alert("Send failed");
-  }
+  if (messageEl) messageEl.value = "";
+  addLine(`[${formatTime(Date.now())}] TO ${to} : ${message}`);
 };
 
 function startMessageListener() {
@@ -169,7 +127,6 @@ function startMessageListener() {
 
     if (data.to === deviceId) {
       inbox.push(data);
-
       addLine(`[${formatTime(data.time)}] ${data.from} : ${data.message}`);
       beep();
     }
@@ -177,7 +134,8 @@ function startMessageListener() {
 }
 
 window.readInbox = function () {
-  clearScreen();
+  if (!screenEl) return;
+  screenEl.innerHTML = "";
 
   if (inbox.length === 0) {
     addLine("No messages.");
@@ -190,26 +148,23 @@ window.readInbox = function () {
 };
 
 async function loadOldInbox() {
-  try {
-    const snapshot = await get(ref(db, "messages"));
-    if (!snapshot.exists()) return;
+  const snapshot = await get(ref(db, "messages"));
+  if (!snapshot.exists()) return;
 
-    const temp = [];
-    snapshot.forEach((child) => {
-      const m = child.val();
-      if (m && m.to === deviceId) {
-        temp.push(m);
-      }
-    });
+  const temp = [];
+  snapshot.forEach((child) => {
+    const m = child.val();
+    if (m && m.to === deviceId) {
+      temp.push(m);
+    }
+  });
 
-    temp.sort((a, b) => (a.time || 0) - (b.time || 0));
-    inbox = temp;
-  } catch (error) {
-    console.error("loadOldInbox error:", error);
-  }
+  temp.sort((a, b) => (a.time || 0) - (b.time || 0));
+  inbox = temp;
 }
 
 async function initPager() {
+  setDeviceText("DEVICE : loading...");
   await registerDevice();
   await loadOldInbox();
   startMessageListener();
